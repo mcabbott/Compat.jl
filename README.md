@@ -114,6 +114,8 @@ Currently, the `@compat` macro supports the following syntaxes:
 
 ## New functions, macros, and methods
 
+* A new `dropdims(f, args...; dims, kwargs...)` method computes the reduction `f` over the region described by `dims` and then drops those dimensions from the result ([#33130]).
+
 * `eachrow`, `eachcol`, and `eachslice` to iterate over first, second, or given dimension
   of an array ([#29749]).
 

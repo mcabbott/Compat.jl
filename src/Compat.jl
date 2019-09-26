@@ -1866,6 +1866,11 @@ if v"0.7.0" <= VERSION < v"1.1.0-DEV.594"
     Base.merge(a::NamedTuple) = a
 end
 
+# https://github.com/JuliaLang/julia/pull/33130
+if VERSION < v"1.4.0-DEV.79" # not in fact merged yet!
+    Base.dropdims(f, args...; dims, kwargs...) = _dropdims(f(args...; kwargs..., dims=dims), dims)
+end
+
 include("deprecated.jl")
 
 end # module Compat

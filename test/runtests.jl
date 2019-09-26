@@ -38,7 +38,7 @@ if VERSION >= v"0.7"
         @test collect(eachrow(M)) == collect(eachslice(M, dims = 1)) == [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
         @test collect(eachcol(M)) == collect(eachslice(M, dims = 2)) == [[1, 4, 7], [2, 5, 8], [3, 6, 9]]
         @test_throws DimensionMismatch eachslice(M, dims = 4)
-        
+
         # Higher-dimensional case
         M = reshape([(1:16)...], 2, 2, 2, 2)
         @test_throws MethodError collect(eachrow(M))
@@ -1497,6 +1497,39 @@ end
 @static if VERSION >= v"0.7.0"
     @test merge((a=1,b=1)) == (a=1,b=1)
     @test merge((a=1,), (b=2,), (c=3,)) == (a=1,b=2,c=3)
+end
+
+# https://github.com/JuliaLang/julia/pull/33130
+@testset "dropdims with reductions" begin # issue #16606
+     @test (@inferred(dropdims(sum, a, dims=1)) ==
+            @inferred(dropdims(sum, a, dims=(1,))) ==
+            reshape(sum(a, dims=1), (1, 8, 8, 1)))
+     @test (@inferred(dropdims(sum, a, dims=3)) ==
+            @inferred(dropdims(sum, a, dims=(3,))) ==
+            reshape(sum(a, dims=3), (1, 1, 8, 1)))
+     @test (@inferred(dropdims(sum, a, dims=4)) ==
+            @inferred(dropdims(sum, a, dims=(4,))) ==
+            reshape(sum(a, dims=4), (1, 1, 8, 1)))
+     @test (@inferred(dropdims(sum, a, dims=(1, 5))) ==
+            dropdims(sum, a, dims=(5, 1)) ==
+            reshape(sum(a, dims=(5, 1)), (1, 8, 8)))
+     @test (@inferred(dropdims(sum, a, dims=(1, 2, 5))) ==
+            dropdims(sum, a, dims=(5, 2, 1)) ==
+            reshape(sum(a, dims=(5, 2, 1)), (8, 8)))
+     @test (@inferred(dropdims(sum, abs2, a, dims=1)) ==
+            @inferred(dropdims(sum, abs2, a, dims=(1,))) ==
+            reshape(sum(abs2, a, dims=1), (1, 8, 8, 1)))
+     _sumplus(x; dims, plus) = sum(x; dims=dims) .+ plus  # reduction with keywords
+     @test (@inferred(dropdims(_sumplus, a, dims=4, plus=1)) ==
+            @inferred(dropdims(_sumplus, a, dims=(4,), plus=1)) ==
+            reshape(sum(a, dims=4) .+ 1, (1, 1, 8, 1)))
+     @test_throws UndefKeywordError dropdims(sum, a)
+     @test_throws UndefKeywordError dropdims(sum, a, 1)
+     @test_throws ArgumentError dropdims(sum, a, dims=0)
+     @test_throws ArgumentError dropdims(sum, a, dims=(1, 1))
+     @test_throws ArgumentError dropdims(sum, a, dims=(1, 2, 1))
+     @test_throws ArgumentError dropdims(sum, a, dims=(1, 1, 2))
+     @test_throws ArgumentError dropdims(sum, a, dims=6)
 end
 
 nothing
