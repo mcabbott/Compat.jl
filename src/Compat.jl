@@ -795,6 +795,11 @@ if VERSION < v"1.9.0-DEV.461"
     Base.VersionNumber(v::VersionNumber) = v
 end
 
+# https://github.com/JuliaLang/julia/pull/47354/files
+if VERION < v"1.11-"
+    Iterators.cycle(xs, n::Integer) = Iterators.flatten(Iterators.repeated(xs, n))
+end
+
 include("deprecated.jl")
 
 end # module Compat
